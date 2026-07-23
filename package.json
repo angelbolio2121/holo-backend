@@ -1,5 +1,6 @@
 {
   "name": "holo-backend",
-  "version": "1.0.0",
-  "private": true
+     "version": "1.0.0",
+     "private": true,
+     "type": "module"
 }
