@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-  // Permite que tu HTML (abierto localmente o desde cualquier dominio) llame a este endpoint
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -15,25 +14,15 @@ export default async function handler(req, res) {
   const { messages } = req.body || {};
 
   if (!Array.isArray(messages)) {
-    return res.status(400).json({ error: 'Falta el arreglo "messages" en el body' });
+    return res.status(400).json({ error: 'Falta el arreglo messages en el body' });
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(500).json({ error: 'ANTHROPIC_API_KEY no está configurada en Vercel. Ve a Settings > Environment Variables.' });
+    return res.status(500).json({ error: 'ANTHROPIC_API_KEY no esta configurada en Vercel.' });
   }
 
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        system: 'Eres el asistente virtual de IMAGINA, una agencia de Inteligencia Artificial y Consultoría ubicada en Tulancingo, Hidalgo, México.
+  const SYSTEM_PROMPT = `
+Eres el asistente virtual de IMAGINA, una agencia de Inteligencia Artificial y Consultoría ubicada en Tulancingo, Hidalgo, México.
 
 TU ROL
 Hablas con visitantes y prospectos como si fueras parte del equipo de IMAGINA. Tu trabajo es explicar qué hace la empresa, resolver dudas sobre los servicios, y guiar al visitante hacia agendar una asesoría gratuita o cotizar su proyecto. Respondes en español, directo, sin relleno — igual que el estilo de la empresa.
@@ -92,7 +81,21 @@ QUÉ DEBES HACER EN LA CONVERSACIÓN
 - Si el visitante muestra interés real (pregunta por precio, quiere empezar, describe su negocio), invítalo a agendar la asesoría gratuita por WhatsApp o usar el cotizador en línea.
 - Si preguntan algo que no está en esta información (ej. detalles legales, contratos, disponibilidad de fechas), sé honesto: no lo sabes con certeza y sugiere contactar directo por WhatsApp.
 - No inventes precios, plazos exactos, ni funciones que no están listadas aquí.
-- Mantén respuestas cortas y claras — estás en una interfaz de holograma/chat, no escribiendo un ensayo.',
+- Mantén respuestas cortas y claras — estás en una interfaz de holograma/chat, no escribiendo un ensayo.
+`;
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
         messages
       })
     });
