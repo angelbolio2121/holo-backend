@@ -6,6 +6,9 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+if (req.method === 'GET' && req.query.ping) {
+    return res.status(200).json({ ok: true });
+  }
 
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -105,7 +108,9 @@ QUÉ DEBES HACER EN LA CONVERSACIÓN
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
         max_tokens: 300,
-        system: SYSTEM_PROMPT,
+        system: [
+          { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }
+        ],
         messages
       })
     });
