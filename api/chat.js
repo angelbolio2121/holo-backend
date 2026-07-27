@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -14,7 +15,7 @@ if (req.method === 'GET' && req.query.ping) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { messages } = req.body || {};
+  const { messages, stream: wantsStream } = req.body || {};
 
   if (!Array.isArray(messages)) {
     return res.status(400).json({ error: 'Falta el arreglo messages en el body' });
@@ -111,16 +112,24 @@ QUÉ DEBES HACER EN LA CONVERSACIÓN
         system: [
           { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }
         ],
-        messages
+        messages,
+        stream: wantsStream === true
       })
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json(data);
+ if (!response.ok) {
+      const errText = await response.text();
+      return res.status(response.status).json({ error: errText });
     }
 
+    if (wantsStream) {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      res.setHeader('Connection', 'keep-alive');
+      return Readable.fromWeb(response.body).pipe(res);
+    }
+
+    const data = await response.json();
     return res.status(200).json(data);
   } catch (err) {
     return res.status(500).json({ error: err.message });
